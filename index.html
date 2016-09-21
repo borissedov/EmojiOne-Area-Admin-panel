@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html ng-app="firebase-admin">
+    <head>
+        <title>EmojiOne-Area-Admin</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <!-- Bootstrap -->
+        <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link href="css/font-awesome.min.css" rel="stylesheet" />
+        <link href="css/emojionearea.min.css" rel="stylesheet" />
+        <link href="css/main.css" rel="stylesheet" />
+
+    </head>
+    <body ng-controller="MainCtrl as main">
+        <div class="form-signin" ng-hide="main.athenticated">
+            <h2 class="form-signin-heading">Please sign in</h2>
+            <label for="inputEmail" class="sr-only">Email address</label>
+            <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required="" autofocus="" ng-model="main.authData.username">
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input type="password" id="inputPassword" class="form-control" placeholder="Password" required="" ng-model="main.authData.password">
+            <button class="btn btn-lg btn-primary btn-block" type="submit" ng-click="main.authUser()">Sign in</button>
+        </div>
+
+        <div class="main-content" ng-show="main.athenticated">
+            <nav class="navbar navbar-default navbar-fixed-top">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse" class="navbar-toggle collapsed" type="button">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a href="/index.html" class="navbar-brand">Fox Emoji</a>
+                    </div>
+                    <div class="navbar-collapse collapse" id="navbar">
+                        <ul class="nav navbar-nav navbar-left">
+                            <li class="active"><a href="/index.html">Emoji Database</a></li>
+                            <li><a href="/suggested.html">Suggested Emoji</a></li>
+                        </ul>
+                        <!--<form class="navbar-form navbar-right">-->
+                            <!--<input type="text" placeholder="Search..." class="form-control">-->
+                        <!--</form>-->
+                        <div class="btn-group navbar-form navbar-right">
+                            <button class="btn btn-default"><i class="fa fa-user"></i></button>
+                            <button class="btn btn-default" type="button">Administrator</button>
+                            <button aria-expanded="false" aria-haspopup="true" data-toggle="dropdown"
+                                    class="btn btn-default dropdown-toggle" type="button"><span class="caret"></span> <span
+                                    class="sr-only">Toggle Dropdown</span></button>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" ng-click="main.logout()">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid">
+
+                <div class="row row-offcanvas row-offcanvas-left">
+                    <div class="col-sm-3 col-md-2 sidebar sidebar-offcanvas" id="sidebar">
+                        <h5 class="text-center">Recently Added:</h5>
+                        <div class="sidebar-emojis">
+                            <div class="sidebar-emoji" emojione-area ng-repeat="emoji in main.emojis | orderObjectBy:updated_at:true | limitTo: 6">
+                            <!--<div class="sidebar-emoji" emojione-area ng-repeat="emoji in main.recentEmojis | orderBy:'':true">-->
+                                <div class="emoji-alias">{{emoji.alias}}</div>
+                                <div class="emoji-codes-array hidden">
+                                    <input type="text" class="emoji-data-item" ng-repeat="item in emoji.data" ng-model="item.unicode"/>
+                                </div>
+                                <div class="emoji-images-array hidden">
+                                    <input type="text" class="emoji-data-item" ng-repeat="item in emoji.data" ng-model="item.image"/>
+                                </div>
+                                <div class="emoji-data-area-wrapper">
+                                    <textarea class="emoji-data-area">{{emoji.data}}</textarea>
+                                    <div class="emoji-data-area-overlay"></div>
+                                </div>
+                                <div class="emoji-side-controls">
+                                    <span class="glyphicon glyphicon-remove" ng-click="main.removeEmoji(emoji)"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                        <p class="visible-xs toggle-sidebar">
+                            <button data-toggle="offcanvas" class="btn btn-primary btn-xs" type="button">Toggle Recent Emojis</button>
+                        </p>
+
+                        <div class="panel panel-default panel-top">
+                            <div class="panel-body">
+                                <div class="right-inner-addon pull-left">
+                                    <i class="fa fa-search"></i>
+                                    <input type="search" ng-model="q" class="form-control" placeholder="Search" />
+                                </div>
+
+                                <button class="pull-right btn btn-default button-add" open-add-modal>Add New</button>
+                            </div>
+                        </div>
+
+                        <div class="panel panel-default panel-main">
+                            <div class="panel-body">
+                                <ul class="search-links text-center">
+                                    <li ng-click="main.activateLetter('')"
+                                        ng-class="{'active':main.activeLetter==''}">ALL</li>
+                                    <li ng-repeat="letter in main.alphabet track by $index "
+                                        ng-click="main.activateLetter(letter)"
+                                        ng-class="{'active':letter==main.activeLetter}">{{letter}}</li>
+                                </ul>
+                                <div class="list-emojis container-fluid">
+                                    <div class="item-emoji" emojione-area ng-repeat="emoji in main.filtered =
+                                    (main.emojis | startsWithLetter : main.activeLetter | filter:q )
+                                    | startFrom:(main.currentPage-1)*main.entryLimit | limitTo:main.entryLimit">
+                                        <div class="emoji-alias">{{emoji.alias}}</div>
+                                        <!--<input type="hidden" class="emoji-data" value="{{emoji.data}}" />-->
+
+                                        <div class="emoji-codes-array hidden">
+                                            <input type="text" class="emoji-data-item" ng-repeat="item in emoji.data" ng-model="item.unicode"/>
+                                        </div>
+                                        <div class="emoji-images-array hidden">
+                                            <input type="text" class="emoji-data-item" ng-repeat="item in emoji.data" ng-model="item.image"/>
+                                        </div>
+
+                                        <div class="emoji-data-area-wrapper">
+                                            <textarea class="emoji-data-area">{{emoji.data}}</textarea>
+                                            <div class="emoji-data-area-overlay"></div>
+                                        </div>
+
+                                        <span class="glyphicon glyphicon-pencil left" ng-click="main.openEditModal(emoji)"
+                                              open-edit-modal></span>
+                                        <span class="glyphicon glyphicon-remove" ng-click="main.removeEmoji(emoji)"></span>
+
+                                    </div>
+                                </div>
+
+                                <ul uib-pagination total-items="main.filtered.length" ng-model="main.currentPage"
+                                    max-size="main.maxSize" boundary-link-numbers="true"></ul>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Modal -->
+            <div id="add-modal" class="modal fade" role="dialog">
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title">Add New Word to Emoji Conversion</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Write 1 word or a phrase up to 3 words you would like to convert:</p>
+                            <input type="text" ng-model="main.newEmoji.alias" class="form-control" />
+                            <p>Add emoji(s) you would like to use for conversion:</p>
+
+                            <div class="emoji-data-area-wrapper large-icons"></div>
+
+                            <div class="upload-image row">
+                                <div class="col-md-6">
+                                    <input class="input-upload-image bottom-marg-15" type="file" name="file" upload-file />
+                                </div>
+                                <div class="col-md-6">
+                                    <a class="btn btn-primary btn-block btn-lg" ng-click="main.upload('add-modal')">Upload</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <span>* drag and drop emoji cells to edit the order</span>
+                            <button class="btn btn-default button-add button-submit-new" data-dismiss="modal" update-add-modal ng-click="main.addEmoji()">Add New</button>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Edit Modal -->
+            <div id="edit-modal" class="modal fade" role="dialog">
+                <div class="modal-dialog modal-lg">
+
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title">Edit Emoji</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Write 1 word or a phrase up to 3 words you would like to convert:</p>
+                            <input type="text" ng-model="main.edit_emoji.alias" class="form-control" />
+                            <p>Add emoji(s) you would like to use for conversion:</p>
+
+                            <div class="emoji-data-area-wrapper large-icons">
+                            </div>
+
+                            <div class="upload-image row">
+                                <div class="col-md-6">
+                                    <input class="input-upload-image bottom-marg-15" type="file" name="file" upload-file />
+                                </div>
+                                <div class="col-md-6">
+                                    <a class="btn btn-primary btn-block btn-lg" ng-click="main.upload('edit-modal')">Upload</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <span>* drag and drop emoji cells to edit the order</span>
+                            <button class="btn btn-default button-add button-submit-new" data-dismiss="modal" update-edit-modal ng-click="main.updateEditModal()">Save</button>
+                            <!--<button class="btn btn-default button-add button-submit-new" update-edit-modal>TEST</button>-->
+                        </div>
+                        <!--<input class="test-output" type="text" />-->
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+        <script src="//cdnjs.cloudflare.com/ajax/libs/sugar/1.4.1/sugar-full.min.js"></script>
+
+        <script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.5/angular.min.js"></script>
+        <script src="//cdn.firebase.com/js/client/2.4.2/firebase.js"></script>
+        <script src="//cdn.firebase.com/libs/angularfire/1.2.0/angularfire.min.js"></script>
+
+        <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.1.3/ui-bootstrap-tpls.min.js"></script>
+
+        <script src="js/aws-sdk.min.js"></script>
+
+        <script src="js/emojionearea.min.js"></script>
+
+        <script src="js/functions.js"></script>
+        <script src="js/app.js"></script>
+        <script src="js/config.js"></script>
+        <script src="js/script.js"></script>
+    </body>
+</html>
