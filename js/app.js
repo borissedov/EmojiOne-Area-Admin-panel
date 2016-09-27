@@ -380,13 +380,22 @@ app.directive('updateEditModal', [ '$timeout', function($timeout) {
                     var image = images[j];
 
                     if ($(image).hasClass('emojioneemoji')) {
-                        var surrogate = image.alt.hexEncode();
-                        for (i = 0; i < surrogate.length / 8; i++) {
-                            var h = parseInt(surrogate.substr(i * 8, 4), 16);
-                            var l = parseInt(surrogate.substr(i * 8 + 4, 4), 16);
-                            var data = {};
-                            data.unicode = surrogateToCodePoint(h, l).toString(16);
 
+                        var surrogate = image.alt.hexEncode();
+
+                        if (surrogate.length > 4) {
+                            for (i = 0; i < surrogate.length / 8; i++) {
+                                var h = parseInt(surrogate.substr(i * 8, 4), 16);
+                                var l = parseInt(surrogate.substr(i * 8 + 4, 4), 16);
+                                var data = {};
+                                data.unicode = surrogateToCodePoint(h, l).toString(16);
+
+                                codes.push(data);
+                            }
+                        }
+                        else {
+                            var data = {};
+                            data.unicode = surrogate;
                             codes.push(data);
                         }
                     }
@@ -419,7 +428,7 @@ app.directive('updateEditModal', [ '$timeout', function($timeout) {
                 // ctrl.edit_emoji.data = unicodes;
 
 
-                // $('.test-output').val(JSON.stringify(codes));
+                //$('.test-output').val(JSON.stringify(codes));
             }
             element.bind('click', updateEditModal);
         }
@@ -460,12 +469,20 @@ app.directive('updateAddModal', [ '$timeout', function($timeout) {
 
                     if ($(image).hasClass('emojioneemoji')) {
                         var surrogate = image.alt.hexEncode();
-                        for (i = 0; i < surrogate.length / 8; i++) {
-                            var h = parseInt(surrogate.substr(i * 8, 4), 16);
-                            var l = parseInt(surrogate.substr(i * 8 + 4, 4), 16);
-                            var data = {};
-                            data.unicode = surrogateToCodePoint(h, l).toString(16);
 
+                        if (surrogate.length > 4) {
+                            for (i = 0; i < surrogate.length / 8; i++) {
+                                var h = parseInt(surrogate.substr(i * 8, 4), 16);
+                                var l = parseInt(surrogate.substr(i * 8 + 4, 4), 16);
+                                var data = {};
+                                data.unicode = surrogateToCodePoint(h, l).toString(16);
+
+                                codes.push(data);
+                            }
+                        }
+                        else {
+                            var data = {};
+                            data.unicode = surrogate;
                             codes.push(data);
                         }
                     }
